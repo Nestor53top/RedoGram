@@ -31,7 +31,6 @@ jobs:
           ref: rewrite
           path: source
           fetch-depth: 1
-          submodules: recursive
 
       - name: Setup Java 17
         uses: actions/setup-java@v4
@@ -61,6 +60,52 @@ jobs:
       - name: Install native build deps
         run: |
           sudo apt-get install -y bison gcc make curl ninja-build ccache
+
+      - name: Create proprietary stubs
+        run: |
+          mkdir -p source/TMessagesProj/src/main/java/com/radolyn/ayugram/proprietary
+          cat > source/TMessagesProj/src/main/java/com/radolyn/ayugram/proprietary/AyuHistoryHook.java << 'JAVA'
+          package com.radolyn.ayugram.proprietary;
+          import android.util.SparseArray;
+          import org.telegram.messenger.MessageObject;
+          import java.util.ArrayList;
+          public class AyuHistoryHook {
+              public static class MinMaxIds {
+                  public int first;
+                  public int second;
+                  public MinMaxIds(int f, int s) { first = f; second = s; }
+              }
+              public static MinMaxIds getMinAndMaxIds(ArrayList<MessageObject> messArr) {
+                  int min = Integer.MAX_VALUE;
+                  int max = Integer.MIN_VALUE;
+                  if (messArr != null) {
+                      for (MessageObject obj : messArr) {
+                          int id = obj.messageOwner.id;
+                          if (id < min) min = id;
+                          if (id > max) max = id;
+                      }
+                  }
+                  return new MinMaxIds(min, max);
+              }
+              public static void doHook(int currentAccount, ArrayList<MessageObject> messArr,
+                                         SparseArray<MessageObject> messagesDict,
+                                         int startId, int endId, long dialogId,
+                                         int limit, int topicId, boolean isSecretChat) {}
+          }
+          JAVA
+          cat > source/TMessagesProj/src/main/java/com/radolyn/ayugram/proprietary/AyuMessageUtils.java << 'JAVA'
+          package com.radolyn.ayugram.proprietary;
+          import com.radolyn.ayugram.database.entities.EditedMessage;
+          import com.radolyn.ayugram.messages.AyuSavePreferences;
+          import org.telegram.messenger.MessageObject;
+          public class AyuMessageUtils {
+              public static void map(AyuSavePreferences prefs, EditedMessage entity) {}
+              public static void mapMedia(AyuSavePreferences prefs, EditedMessage entity, boolean force) {}
+              public static void map(EditedMessage entity, MessageObject msg, int currentAccount) {}
+              public static void mapMedia(EditedMessage entity, MessageObject msg) {}
+          }
+          JAVA
+          echo "Proprietary stubs created"
 
       - name: Create API_KEYS
         run: |
