@@ -117,9 +117,9 @@ jobs:
           APP_HASH = "eb06d4abfb49dc3eeb1aeb98ae0f581e"
           MAPS_V2_API = ""
 
-          SIGNING_KEY_PASSWORD = "redogram"
-          SIGNING_KEY_ALIAS = "redogram"
-          SIGNING_KEY_STORE_PASSWORD = "redogram"
+          SIGNING_KEY_PASSWORD = redogram
+          SIGNING_KEY_ALIAS = redogram
+          SIGNING_KEY_STORE_PASSWORD = redogram
           EOF
           cat source/API_KEYS
 
