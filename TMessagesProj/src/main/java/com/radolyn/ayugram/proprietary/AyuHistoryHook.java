@@ -1,7 +1,6 @@
 package com.radolyn.ayugram.proprietary;
 
 import android.util.SparseArray;
-import org.telegram.messenger.MessageObject;
 import java.util.ArrayList;
 
 public class AyuHistoryHook {
@@ -15,23 +14,26 @@ public class AyuHistoryHook {
         }
     }
 
-    public static MinMaxIds getMinAndMaxIds(ArrayList<MessageObject> messArr) {
+    public static MinMaxIds getMinAndMaxIds(ArrayList<?> messArr) {
         int min = Integer.MAX_VALUE;
         int max = Integer.MIN_VALUE;
         if (messArr != null) {
-            for (MessageObject obj : messArr) {
-                int id = obj.messageOwner.id;
-                if (id < min) min = id;
-                if (id > max) max = id;
+            for (Object obj : messArr) {
+                try {
+                    Object owner = obj.getClass().getField("messageOwner").get(obj);
+                    int id = (int) owner.getClass().getField("id").get(owner);
+                    if (id < min) min = id;
+                    if (id > max) max = id;
+                } catch (Exception ignored) {}
             }
         }
         return new MinMaxIds(min, max);
     }
 
-    public static void doHook(int currentAccount, ArrayList<MessageObject> messArr,
-                               SparseArray<MessageObject> messagesDict,
+    @SuppressWarnings("unchecked")
+    public static void doHook(int currentAccount, ArrayList<?> messArr,
+                               SparseArray<?>[] messagesDict,
                                int startId, int endId, long dialogId,
                                int limit, int topicId, boolean isSecretChat) {
-        // Stub - does nothing in open-source build
     }
 }

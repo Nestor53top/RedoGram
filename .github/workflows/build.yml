@@ -67,42 +67,45 @@ jobs:
           cat > source/TMessagesProj/src/main/java/com/radolyn/ayugram/proprietary/AyuHistoryHook.java << 'JAVA'
           package com.radolyn.ayugram.proprietary;
           import android.util.SparseArray;
-          import org.telegram.messenger.MessageObject;
           import java.util.ArrayList;
           public class AyuHistoryHook {
               public static class MinMaxIds {
                   public int first;
                   public int second;
-                  public MinMaxIds(int f, int s) { first = f; second = s; }
+                  public MinMaxIds(int first, int second) {
+                      this.first = first;
+                      this.second = second;
+                  }
               }
-              public static MinMaxIds getMinAndMaxIds(ArrayList<MessageObject> messArr) {
+              public static MinMaxIds getMinAndMaxIds(ArrayList<?> messArr) {
                   int min = Integer.MAX_VALUE;
                   int max = Integer.MIN_VALUE;
                   if (messArr != null) {
-                      for (MessageObject obj : messArr) {
-                          int id = obj.messageOwner.id;
-                          if (id < min) min = id;
-                          if (id > max) max = id;
+                      for (Object obj : messArr) {
+                          try {
+                              Object owner = obj.getClass().getField("messageOwner").get(obj);
+                              int id = (int) owner.getClass().getField("id").get(owner);
+                              if (id < min) min = id;
+                              if (id > max) max = id;
+                          } catch (Exception ignored) {}
                       }
                   }
                   return new MinMaxIds(min, max);
               }
-              public static void doHook(int currentAccount, ArrayList<MessageObject> messArr,
-                                         SparseArray<MessageObject> messagesDict,
+              @SuppressWarnings("unchecked")
+              public static void doHook(int currentAccount, ArrayList<?> messArr,
+                                         SparseArray<?>[] messagesDict,
                                          int startId, int endId, long dialogId,
                                          int limit, int topicId, boolean isSecretChat) {}
           }
           JAVA
           cat > source/TMessagesProj/src/main/java/com/radolyn/ayugram/proprietary/AyuMessageUtils.java << 'JAVA'
           package com.radolyn.ayugram.proprietary;
-          import com.radolyn.ayugram.database.entities.EditedMessage;
-          import com.radolyn.ayugram.messages.AyuSavePreferences;
-          import org.telegram.messenger.MessageObject;
           public class AyuMessageUtils {
-              public static void map(AyuSavePreferences prefs, EditedMessage entity) {}
-              public static void mapMedia(AyuSavePreferences prefs, EditedMessage entity, boolean force) {}
-              public static void map(EditedMessage entity, MessageObject msg, int currentAccount) {}
-              public static void mapMedia(EditedMessage entity, MessageObject msg) {}
+              public static void map(Object prefs, Object entity) {}
+              public static void mapMedia(Object prefs, Object entity, boolean force) {}
+              public static void map(Object entity, Object msg, int currentAccount) {}
+              public static void mapMedia(Object entity, Object msg) {}
           }
           JAVA
           echo "Proprietary stubs created"
@@ -139,8 +142,11 @@ jobs:
 
       - name: Build with Gradle
         working-directory: source
+        env:
+          GRADLE_OPTS: "-Xss4m -Dorg.gradle.jvmargs='-Xss4m -Xmx4g'"
         run: |
-          ./gradlew assembleAfatRelease --no-daemon --no-configuration-cache --stacktrace 2>&1 | tee build.log
+          export JAVA_OPTS="-Xss4m"
+          ./gradlew assembleAfatRelease --no-daemon --no-configuration-cache -Dorg.gradle.jvmargs="-Xss4m -Xmx4g" --stacktrace 2>&1 | tee build.log
         continue-on-error: true
 
       - name: Check build output
