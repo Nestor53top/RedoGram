@@ -72,16 +72,21 @@ jobs:
           SIGNING_KEY_ALIAS = "redogram"
           SIGNING_KEY_STORE_PASSWORD = "redogram"
           EOF
+          cat source/API_KEYS
 
       - name: Generate signing keystore
         run: |
           cd source
-          keytool -genkey -v -keystore TMessagesProj/config/extera.jks \
+          rm -f TMessagesProj/config/extera.jks
+          keytool -genkeypair -v \
+            -keystore TMessagesProj/config/extera.jks \
+            -storetype JKS \
             -keyalg RSA -keysize 2048 -validity 10000 \
             -alias redogram \
             -storepass redogram \
             -keypass redogram \
-            -dname "CN=RedoGram, OU=Dev, O=RedoGram, L=Unknown, ST=Unknown, C=US"
+            -dname "CN=RedoGram,OU=Dev,O=RedoGram,L=Unknown,ST=Unknown,C=US"
+          ls -la TMessagesProj/config/extera.jks
 
       - name: Grant execute permission for gradlew
         run: chmod +x source/gradlew
